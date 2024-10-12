@@ -52,6 +52,7 @@ cd pin-3.22-98547-g7a303a835-gcc-linux/source/tools
 make
 
 # Set PIN_ROOT environment variable (replace /your/path/to/pin with actual path)
+cd ~/ChampSim/pin-3.22-98547-g7a303a835-gcc-linux/
 export PIN_ROOT=$(pwd)
 
 # Clone the ece562 repository
