@@ -1,4 +1,3 @@
-
 #include <algorithm>
 #include <cassert>
 #include <map>
@@ -7,79 +6,67 @@
 
 #include "cache.h"
 
+// Define global variables to store cache access data
+std::map<CACHE*, std::vector<uint64_t>> last_used_cycles;
+std::map<CACHE*, std::vector<uint64_t>> eviction_cycles;
+
 namespace
 {
-    std::map<CACHE*, std::vector<uint64_t>> last_used_cycles;  // For temporal locality
-    std::map<CACHE*, std::vector<bool>> valid_status;          // Cache line valid status
-    std::map<CACHE*, std::vector<bool>> dirty_status;          // Cache line dirty status
-    std::map<CACHE*, std::vector<uint64_t>> eviction_cycles;   // Tracks when the cache line was last evicted
     std::ofstream csv_file("cache_access_data.csv");  // Open CSV file to log data
 
     // Write header to the CSV file
     void write_csv_header() {
-        csv_file << "PC,Memory Address,Cache Set,Access Type,Hit/Miss,Cycle Count,Time Since Last Access,Valid Status,Dirty Status,Cache Occupancy,Last Eviction Cycle\n";
+        csv_file << "Memory Address,Cache Set,Access Type,Cycle Count,Data Size,Hit/Miss\n";
     }
 }
 
 // Initialize replacement state
-void CACHE::initialize_replacement() {
-    ::last_used_cycles[this] = std::vector<uint64_t>(NUM_SET * NUM_WAY, 0);
-    ::valid_status[this] = std::vector<bool>(NUM_SET * NUM_WAY, false);
-    ::dirty_status[this] = std::vector<bool>(NUM_SET * NUM_WAY, false);
-    ::eviction_cycles[this] = std::vector<uint64_t>(NUM_SET * NUM_WAY, 0);
+void CACHE::repl_replacementDlruStat_initialize_replacement() {
+    last_used_cycles[this] = std::vector<uint64_t>(NUM_SET * NUM_WAY, 0);
+    eviction_cycles[this] = std::vector<uint64_t>(NUM_SET * NUM_WAY, 0);
     write_csv_header();  // Write CSV header at initialization
 }
 
 // Find victim for replacement based on LRU policy
-uint32_t CACHE::find_victim(uint32_t triggering_cpu, uint64_t instr_id, uint32_t set, const BLOCK* current_set, uint64_t ip, uint64_t full_addr, uint32_t type)
+uint32_t CACHE::repl_replacementDlruStat_find_victim(uint32_t triggering_cpu, uint64_t instr_id, uint32_t set, const BLOCK* current_set, uint64_t full_addr, uint64_t /* pc */, uint32_t type)
 {
-    auto begin = std::next(std::begin(::last_used_cycles[this]), set * NUM_WAY);
+    auto begin = std::next(std::begin(last_used_cycles[this]), set * NUM_WAY);
     auto end = std::next(begin, NUM_WAY);
 
     // Find the least recently used cache line
     auto victim = std::min_element(begin, end);
     assert(begin <= victim);
     assert(victim < end);
-    return static_cast<uint32_t>(std::distance(begin, victim)); // cast protected by prior asserts
+
+    uint32_t victim_way = static_cast<uint32_t>(std::distance(begin, victim));
+    
+    // Log the eviction cycle for the selected victim
+    eviction_cycles[this].at(set * NUM_WAY + victim_way) = current_cycle;
+
+    return victim_way; // cast protected by prior asserts
 }
 
 // Update replacement state and log the data to CSV
-void CACHE::update_replacement_state(uint32_t triggering_cpu, uint32_t set, uint32_t way, uint64_t full_addr, uint64_t ip, uint64_t victim_addr, uint32_t type, uint8_t hit)
+void CACHE::repl_replacementDlruStat_update_replacement_state(uint32_t triggering_cpu, uint32_t set, uint32_t way, uint64_t full_addr, uint64_t /* pc */, uint64_t victim_addr, uint32_t type, uint8_t hit)
 {
     // Determine access type (read/write)
     bool is_write = (static_cast<access_type>(type) == access_type::WRITE);
     std::string access_type_str = is_write ? "WRITE" : "READ";
 
-    // Time Since Last Access (Temporal Locality)
-    uint64_t time_since_last_access = current_cycle - ::last_used_cycles[this].at(set * NUM_WAY + way);
+    // Use fixed data size or retrieve if available in the trace
+    uint32_t data_size = 64;  // Example: assuming 64 bytes; replace if your trace has data size info
 
-    // Cache Line Status
-    bool is_valid = ::valid_status[this].at(set * NUM_WAY + way);
-    bool is_dirty = ::dirty_status[this].at(set * NUM_WAY + way);
+    // Log only the relevant trace data and hit/miss status, excluding the PC
+    csv_file << full_addr << "," << set << "," << access_type_str << ","
+             << current_cycle << "," << data_size << ","
+             << static_cast<int>(hit) << "\n";
 
-    // Cache Occupancy (Number of valid lines in the set)
-    uint32_t cache_occupancy = 0;
-    for (size_t i = set * NUM_WAY; i < (set + 1) * NUM_WAY; ++i) {
-        if (::valid_status[this].at(i)) {
-            cache_occupancy++;
-        }
-    }
-
-    // Eviction History
-    uint64_t last_eviction_cycle = ::eviction_cycles[this].at(set * NUM_WAY + way);
-
-    // Update the status of the cache line being accessed
-    if (!hit || !is_write) {
-        ::last_used_cycles[this].at(set * NUM_WAY + way) = current_cycle;
-        ::valid_status[this].at(set * NUM_WAY + way) = true;
-        ::dirty_status[this].at(set * NUM_WAY + way) = is_write;  // Mark as dirty on write
-    }
-
-    // Log the access details to CSV
-    csv_file << ip << "," << full_addr << "," << set << "," << access_type_str << "," 
-             << static_cast<int>(hit) << "," << current_cycle << "," << time_since_last_access << "," 
-             << is_valid << "," << is_dirty << "," << cache_occupancy << "," << last_eviction_cycle << "\n";
+    // Update last used cycle for this way in the set
+    last_used_cycles[this].at(set * NUM_WAY + way) = current_cycle;
 }
 
 // Collect final statistics (optional for this case)
-void CACHE::replacement_final_stats() {}
+void CACHE::repl_replacementDlruStat_replacement_final_stats() {
+    // Optional: Include final statistics if needed
+    // This function is a placeholder and can remain empty if no final stats are required.
+}
