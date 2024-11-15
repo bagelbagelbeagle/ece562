@@ -44,5 +44,5 @@ for trace_file in $trace_folder_filepath/*.xz; do
 
   # Run the command and output to a log file with the replacement policy in the filename
   echo "Running ChampSim with trace:${trace_name}"
-  bin/champsim --hide-heartbeat -w "$warmup_instructions" -i "$simulation_instructions" "$trace_file" >> "/home/student/ChampSim/output/${trace_name}.${replacement_policy}.log"
+  bin/champsim --hide-heartbeat -w "$warmup_instructions" -i "$simulation_instructions" "$trace_file" >> "$champsim_dir/output/${trace_name}.${replacement_policy}.log"
 done
