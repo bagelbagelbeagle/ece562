@@ -67,7 +67,7 @@ uint32_t CACHE::find_victim(uint32_t triggering_cpu, uint64_t instr_id, uint32_t
   auto end = std::next(begin, NUM_WAY);
   auto victim = std::find(begin, end, ::maxRRPV);
   while (victim == end) {
-    for (auto it = begin; it != end; ++it)
+    for (auto it = begin; it != end; ++it, ++it)
       ++(*it);
 
     victim = std::find(begin, end, ::maxRRPV);
@@ -84,7 +84,7 @@ void CACHE::update_replacement_state(uint32_t triggering_cpu, uint32_t set, uint
   // handle writeback access
   if (access_type{type} == access_type::WRITE) {
     if (!hit)
-      ::rrpv_values[this][set * NUM_WAY + way] = ::maxRRPV - 1;
+      ::rrpv_values[this][set * NUM_WAY + way] = ::maxRRPV;
 
     return;
   }
