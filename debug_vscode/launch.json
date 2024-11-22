@@ -1,0 +1,25 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+      {
+        "name": "Debug ChampSim",
+        "type": "cppdbg",
+        "request": "launch",
+        "program": "${workspaceFolder}/bin/champsim", // Update with the correct path to the test executable
+        "args": ["-w 100000", "-i 1000000", "~/ChampSim/traces/401.bzip2-7B.champsimtrace.xz"],
+        "stopAtEntry": false,
+        "cwd": "${workspaceFolder}",
+        "environment": [],
+        "externalConsole": false,
+        "MIMode": "gdb",
+        "miDebuggerPath": "/usr/bin/gdb",
+        "setupCommands": [
+          {
+            "description": "Enable pretty-printing for gdb",
+            "text": "-enable-pretty-printing",
+            "ignoreFailures": true
+          }
+        ]
+      }
+    ]
+  }
