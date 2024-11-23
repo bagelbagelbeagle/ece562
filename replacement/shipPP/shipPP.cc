@@ -100,7 +100,7 @@ void CACHE::update_replacement_state(uint32_t triggering_cpu, uint32_t set, uint
                               [addr = full_addr, shamt = 8 + champsim::lg2(NUM_WAY)](auto x) { return x.valid && (x.address >> shamt) == (addr >> shamt); });
     if (match != s_set_end) {
       auto SHCT_idx = match->ip % ::SHCT_PRIME;
-      if (::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx] > 0)
+      if ((::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx] > 0) && (!hit))
         ::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx]--;
 
       match->used = 1;
@@ -109,7 +109,7 @@ void CACHE::update_replacement_state(uint32_t triggering_cpu, uint32_t set, uint
 
       if (match->used) {
         auto SHCT_idx = match->ip % ::SHCT_PRIME;
-        if (::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx] < ::SHCT_MAX)
+        if ((::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx] < ::SHCT_MAX) && (::rrpv_values[this][set * NUM_WAY + way] != 0))
           ::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx]++;
       }
 
