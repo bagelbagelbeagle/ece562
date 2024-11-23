@@ -56,7 +56,7 @@ void CACHE::initialize_replacement()
 
   sampler.emplace(this, ::SAMPLER_SET * NUM_WAY);
 
-  ::rrpv_values[this] = std::vector<int>(NUM_SET * NUM_WAY, ::maxRRPV);
+  ::rrpv_values[this] = std::vector<int>(NUM_SET * NUM_WAY, ::maxRRPV - 1);
 }
 
 // find replacement victim
@@ -129,9 +129,12 @@ void CACHE::update_replacement_state(uint32_t triggering_cpu, uint32_t set, uint
     // SHIP prediction
     auto SHCT_idx = ip % ::SHCT_PRIME;
 
-    ::rrpv_values[this][set * NUM_WAY + way] = ::maxRRPV - 1;
     if (::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx] == ::SHCT_MAX)
+      ::rrpv_values[this][set * NUM_WAY + way] = 0;
+    else if (::SHCT[std::make_pair(this, triggering_cpu)][SHCT_idx] == 0)
       ::rrpv_values[this][set * NUM_WAY + way] = ::maxRRPV;
+    else 
+      ::rrpv_values[this][set * NUM_WAY + way] = ::maxRRPV - 1;
   }
 }
 
