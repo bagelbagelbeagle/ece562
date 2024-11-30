@@ -6,12 +6,13 @@
 #include <vector>    // For OPTgen tracking during training
 #include "cache.h"   // For CACHE and ChampSim-specific structures
 
-#ifndef LLC_SETS
-#define LLC_SETS 2048  // Number of sets in LLC
+//These lines define set size and num of ways if it is not defined in the cache.h file
+#ifndef NUM_SET
+#define NUM_SET 1024  // Number of sets in LLC
 #endif
 
-#ifndef LLC_WAYS
-#define LLC_WAYS 16  // Number of ways in LLC
+#ifndef NUM_WAY
+#define NUM_WAY 16  // Number of ways in LLC
 #endif
 
 namespace {
@@ -85,15 +86,15 @@ Hawkeye_Predictor prefetch_predictor;  // Prefetch predictor
 // LRU tracking for fallback
 std::map<CACHE*, std::vector<uint64_t>> last_used_cycles;
 
-OPTgen optgen_occup_vector[LLC_SETS];  // OPTgen data structure for Belady-optimal predictions during training
+OPTgen optgen_occup_vector[NUM_SET];  // OPTgen data structure for Belady-optimal predictions during training
 
 }
 
 // Initialize the Hawkeye replacement policy (including LRU tracking and OPTgen for training)
 void CACHE::initialize_replacement() {
     last_used_cycles[this] = std::vector<uint64_t>(NUM_SET * NUM_WAY);  // LRU initialization
-    for (int i = 0; i < LLC_SETS; i++) {
-        optgen_occup_vector[i].init(LLC_WAYS);  // Initialize OPTgen for each set during training
+    for (int i = 0; i < NUM_SET; i++) {
+        optgen_occup_vector[i].init(NUM_WAY);  // Initialize OPTgen for each set during training
     }
 }
 
@@ -113,7 +114,7 @@ uint32_t CACHE::find_victim(uint32_t cpu_id, uint64_t instr_id, uint32_t set, co
     }
 
     // If prediction says dead, evict the first valid block
-    for (uint32_t i = 0; i < LLC_WAYS; ++i) {
+    for (uint32_t i = 0; i < NUM_WAY; ++i) {
         if (!current_set[i].valid) {  // If block is invalid, it's a natural victim
             return i;
         }
