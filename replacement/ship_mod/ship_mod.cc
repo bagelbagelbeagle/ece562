@@ -13,9 +13,12 @@ namespace
 constexpr int maxRRPV = 3;
 constexpr std::size_t SHCT_SIZE = 16384;
 constexpr unsigned SHCT_PRIME = 16381;
-//constexpr std::size_t SAMPLER_SET = (256 * NUM_CPUS);
-constexpr std::size_t SAMPLER_SET = (1024 * NUM_CPUS);
-constexpr unsigned SHCT_MAX = 7;
+constexpr std::size_t SAMPLER_SET = (256 * NUM_CPUS);
+//Adjust this expression to increase/decrease the sampler size
+//constexpr std::size_t SAMPLER_SET = (1024 * NUM_CPUS);
+constexpr unsigned SHCT_MAX = 3;
+//Adjust this expression to increase/decrease the SHCT entry size
+//constexpr unsigned SHCT_MAX = 7;
 
 // sampler structure
 class SAMPLER_class
